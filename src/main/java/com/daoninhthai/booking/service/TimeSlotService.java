@@ -11,6 +11,8 @@ import com.daoninhthai.booking.repository.BookingRepository;
 import com.daoninhthai.booking.repository.ProviderRepository;
 import com.daoninhthai.booking.repository.TimeSlotRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +51,7 @@ public class TimeSlotService {
         return mapToResponse(timeSlot);
     }
 
+    @Cacheable(value = "availability", key = "#providerId + '-' + #date")
     @Transactional(readOnly = true)
     public List<TimeSlotResponse> getAvailableSlots(Long providerId, LocalDate date) {
         DayOfWeek dayOfWeek = date.getDayOfWeek();
@@ -66,6 +69,7 @@ public class TimeSlotService {
                 .collect(Collectors.toList());
     }
 
+    @CacheEvict(value = "availability", allEntries = true)
     @Transactional
     public TimeSlotResponse blockSlot(Long slotId) {
         TimeSlot timeSlot = timeSlotRepository.findById(slotId)
@@ -76,6 +80,7 @@ public class TimeSlotService {
         return mapToResponse(timeSlot);
     }
 
+    @CacheEvict(value = "availability", allEntries = true)
     @Transactional
     public TimeSlotResponse updateAvailability(Long slotId, boolean available) {
         TimeSlot timeSlot = timeSlotRepository.findById(slotId)
